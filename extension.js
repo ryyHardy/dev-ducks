@@ -1,16 +1,47 @@
 const vscode = require('vscode');
+const { exec } = require('child_process');
 
 function activate(context) {
   const disposable = vscode.commands.registerCommand('chatbox.start', () => {
     const panel = vscode.window.createWebviewPanel(
-      'chatbox', 
-      'Chat Box', 
-      vscode.ViewColumn.Beside, 
+      'chatbox',
+      'Chat Box',
+      vscode.ViewColumn.Beside,
       { enableScripts: true }
     );
     panel.webview.html = getWebviewContent();
+
+    // Listen for messages from the webview
+    panel.webview.onDidReceiveMessage((message) => {
+      if (message.command === 'userInput') {
+        const userCode = message.text;
+        const count = 1; // Adjust as needed
+        getAiResponse(userCode, count, (err, aiOutput) => {
+          if (err) {
+            vscode.window.showErrorMessage("AI error: " + err);
+          } else {
+            // Send AI response back to the webview
+            panel.webview.postMessage({ command: 'aiResponse', text: aiOutput });
+          }
+        });
+      }
+    });
   });
   context.subscriptions.push(disposable);
+}
+
+function getAiResponse(code, count, callback) {
+  // Adjust the path to your Python script accordingly.
+  // Make sure to escape quotes in the user-provided code.
+  const safeCode = code.replace(/"/g, '\\"');
+  const cmd = `python path/to/your_script.py "${safeCode}" ${count}`;
+  exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+      callback(stderr || error.toString());
+    } else {
+      callback(null, stdout.trim());
+    }
+  });
 }
 
 function getWebviewContent() {
@@ -79,22 +110,41 @@ function getWebviewContent() {
     <button id="send">Send</button>
   </div>
   <script>
+    const vscode = acquireVsCodeApi();
     const chat = document.getElementById('chat');
     const input = document.getElementById('input');
-    document.getElementById('send').addEventListener('click', () => {
+    const sendButton = document.getElementById('send');
+
+    sendButton.addEventListener('click', () => {
       if (input.value.trim()) {
-        const msg = document.createElement('div');
-        msg.textContent = input.value;
-        chat.appendChild(msg);
-        input.value = '';
+        // Display user's message
+        const userMsg = document.createElement('div');
+        userMsg.textContent = "You: " + input.value;
+        chat.appendChild(userMsg);
         chat.scrollTop = chat.scrollHeight;
+
+        // Send the message to the extension
+        vscode.postMessage({ command: 'userInput', text: input.value });
+        input.value = '';
       }
     });
+
     // Send on Enter key press
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        document.getElementById('send').click();
+        sendButton.click();
+      }
+    });
+
+    // Listen for AI responses from the extension
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (message.command === 'aiResponse') {
+        const aiMsg = document.createElement('div');
+        aiMsg.textContent = "AI: " + message.text;
+        chat.appendChild(aiMsg);
+        chat.scrollTop = chat.scrollHeight;
       }
     });
   </script>
