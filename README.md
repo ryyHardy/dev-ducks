@@ -1,4 +1,4 @@
-# parasocial-coder README
+# dev-ducks README
 
 This is the README for your extension "parasocial-coder". After writing up a brief description, we recommend including the following sections.
 
