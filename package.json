@@ -1,7 +1,7 @@
 {
-  "name": "chatbox-extension",
-  "displayName": "Chatbox Extension",
-  "description": "A simple chatbox extension",
+  "name": "dev-ducks",
+  "displayName": "Dev Ducks",
+  "description": "A Twitch chat-like window populated with Ducks that help you code!",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.50.0"
