@@ -9,7 +9,7 @@ OPENAI_KEY = os.getenv("OPENAI-API-KEY")
 # Define prompt template
 PROMPT_TEMPLATE = PromptTemplate.from_template(
     "Create a list of {count} imaginary Twitch chat messages with imaginary Twitch usernames reacting to aspects of the following code. Make the messages relevant to the code. "
-    "The response should be in the format 'username:message' (with one per line). If the code cuts off, assume \n\nCode:\n{code}"
+    "The response should be in the format 'username:message' (with one per line). If the code cuts off, assume that it isn't an error. \n\nCode:\n{code}"
 )
 
 class TwitchGeneratorClient:
@@ -29,5 +29,5 @@ class TwitchGeneratorClient:
         for line in response.split("\n"):
             if ":" in line:
                 username, message = line.split(":", 1)
-                chat_messages.append((username.strip(), message.strip()))
+                chat_messages.append([username.strip(), message.strip()])
         return chat_messages
