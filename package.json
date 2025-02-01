@@ -1,33 +1,25 @@
 {
-  "name": "parasocial-coder",
-  "displayName": "Parasocial Coder",
-  "description": "A Twitch chat that helps you code!",
+  "name": "chatbox-extension",
+  "displayName": "Chatbox Extension",
+  "description": "A simple chatbox extension",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.50.0"
   },
-  "categories": [
-    "Other"
+  "activationEvents": [
+    "onCommand:chatbox.start"
   ],
-  "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "parasocial-coder.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "chatbox.start",
+        "title": "Start Chatbox"
+      }
+    ]
   },
   "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.96.0",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
-    "eslint": "^9.16.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "vscode:prepublish": "npm run compile",
+    "compile": "echo 'No compilation needed for JavaScript'"
   }
 }
