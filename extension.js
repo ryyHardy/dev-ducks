@@ -1,36 +1,52 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-
-/**
- * @param {vscode.ExtensionContext} context
- */
 function activate(context) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "parasocial-coder" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('parasocial-coder.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
-
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Parasocial Coder!');
-	});
-
-	context.subscriptions.push(disposable);
+  const disposable = vscode.commands.registerCommand('chatbox.start', () => {
+    const panel = vscode.window.createWebviewPanel(
+      'chatbox', 
+      'Chat Box', 
+      vscode.ViewColumn.One, 
+      { enableScripts: true }
+    );
+    panel.webview.html = getWebviewContent();
+  });
+  context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
+function getWebviewContent() {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Box</title>
+  <style>
+    body { font-family: sans-serif; padding: 10px; }
+    #chat { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+    #input { width: 80%; }
+    #send { width: 15%; }
+  </style>
+</head>
+<body>
+  <div id="chat"></div>
+  <input type="text" id="input" placeholder="Type a message..." />
+  <button id="send">Send</button>
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    document.getElementById('send').addEventListener('click', () => {
+      if (input.value.trim()) {
+        const msg = document.createElement('div');
+        msg.textContent = input.value;
+        chat.appendChild(msg);
+        input.value = '';
+        chat.scrollTop = chat.scrollHeight;
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
+
 function deactivate() {}
 
-module.exports = {
-	activate,
-	deactivate
-}
+module.exports = { activate, deactivate };
