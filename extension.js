@@ -47,14 +47,14 @@ function activate(context) {
       if (message.command === 'userInput') {
         const userCode = message.text;
         const count = 1; // Adjust as needed
-        getAiResponse(userCode, count, (err, aiOutput) => {
-          if (err) {
-            vscode.window.showErrorMessage("AI error: " + err);
-          } else {
+        getMessages(userCode, count)
+          .then(aiOutput => {
             // Send AI response back to the webview
             panel.webview.postMessage({ command: 'aiResponse', text: aiOutput });
-          }
-        });
+          })
+          .catch(err => {
+            vscode.window.showErrorMessage("AI error: " + err);
+          });
       }
     });
   });
@@ -105,6 +105,7 @@ function nestedStatement(statement) {
   return formattedStatement; // Output the formatted statement
 }
 
+<<<<<<< HEAD
 function getAiResponse(code, count, callback) {
   // Adjust the path to your Python script accordingly.
   // Make sure to escape quotes in the user-provided code.
@@ -116,13 +117,39 @@ function getAiResponse(code, count, callback) {
       callback(stderr || error.toString());
     } else {
       callback(null, stdout.trim());
+=======
+function getMessages(inputData, count) {
+  const params = {
+    input_data: inputData,
+    count: count
+  };
+
+  return fetch(encodeURI(`http://127.0.0.1:8000/generate_chat/?input_data=${params.input_data}&count=${params.count}`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+>>>>>>> 0a366bda7e603180a5751ed9300557fb8141a75a
     }
-  });
+  })
+    .then(response => response.json())
+    .then(data => data) // Return the data to be used in the caller function
+    .catch(error => {
+      console.error("Error:", error);
+      throw error; // Propagate the error to be handled by the caller
+    });
 }
 
 function getWebviewContent() {
   const htmlPath = path.join(__dirname, 'webview.html');
-  return fs.readFileSync(htmlPath, 'utf8');
+  let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  
+  // Placeholder for dynamic content
+  const dynamicContent = '<div id="dynamic-content"></div>';
+  
+  // Insert dynamic content into the HTML
+  htmlContent = htmlContent.replace('</body>', `${dynamicContent}</body>`);
+  
+  return htmlContent;
 }
 
 function deactivate() {}
