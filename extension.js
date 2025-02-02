@@ -66,31 +66,91 @@ function activate(context) {
       }
     });
   });
-  context.subscriptions.push(disposable);
+
+  context.subscriptions.push(commandDisposable);
+
+  // Automatically trigger the 'chatbox.start' command when the extension is activated
+  vscode.commands.executeCommand('chatbox.start');
 }
 
-function getMessages(inputData, count) {
-  const params = {
-    input_data: inputData,
-    count: count
-  };
+// Handle changes in the text document
+function readChanges(changes, currentStatement, braceCount, cursorPosition) {
+  changes.forEach(change => {
+    // Handle opening brace
+    if (change.text === '{') {
+      braceCount++; // Increment brace count for nested blocks
+    } 
+    // Handle closing brace
+    else if (change.text === '}') {
+      braceCount--; // Decrement brace count when closing brace is encountered
 
-  return fetch(encodeURI(`http://000.0.0.0:8000/generate_chat/?input_data=${params.input_data}&count=${params.count}`), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
+      // Log the statement only if cursor is outside the closing brace (after auto-completion)
+      if (braceCount === 0 && cursorPosition.character === change.range.end.character) {
+        console.log('Statement inside braces:');
+        nestedStatement(currentStatement); // Log the current statement
+        panel.webview.postMessage({ command: 'aiResponse', text: nestedStatement(currentStatement)});
+
+        currentStatement = ''; // Clear the buffer after logging
+      }
+    } 
+    // Handle Enter key (new line)
+    else if (change.text === '\n') {
+      if (braceCount === 0) {
+        console.log('Statement outside braces:');
+        const statement = nestedStatement(currentStatement);
+        
+        // Call getMessages and resolve the promise
+        getMessages(statement, 1).then(response => {
+          console.log(response); // Log the AI response to the console
+          
+          // Send the AI response to the chatbox
+          panel.webview.postMessage({ command: 'aiResponse', text: response });
+        }).catch(err => {
+          console.error('Error in getMessages:', err);
+          
+          // Send an error message to the chatbox if the API call fails
+          panel.webview.postMessage({ command: 'aiResponse', text: 'Error processing your input. Please try again.' });
+        });
+
+        currentStatement = ''; // Clear the buffer after logging
+      }
     }
-  })
-    .then(response => response.json())
-    .then(data => data) // Return the data to be used in the caller function
-    .catch(error => {
-      console.error("Error:", error);
-      throw error; // Propagate the error to be handled by the caller
-    });
+
+    // Handle backspace (remove characters)
+    else if (change.text === '') {
+      currentStatement = currentStatement.slice(0, currentStatement.length - change.rangeLength);
+    } 
+    // Append the typed text
+    else {
+      currentStatement += change.text;
+    }
+  });
+
+  return { statement: currentStatement, braceCount, cursorPosition }; // Return updated values
 }
 
-const fs = require('fs');
-const path = require('path');
+// Format nested statement
+function nestedStatement(statement) {
+  const formattedStatement = statement.trim();
+  return formattedStatement; // Output the formatted statement
+}
+
+// Get AI response from an external API or script
+function getAiResponse(code, count, callback) {
+  // Adjust the path to your Python script accordingly.
+  const safeCode = code.replace(/"/g, '\\"');
+  const cmd = `python path/to/your_script.py "${safeCode}" ${count}`;
+
+  exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+      callback(stderr || error.toString());
+    } else {
+      callback(null, stdout.trim());
+    }
+  });
+}
+
+// Get content for the webview UI
 function getWebviewContent() {
   const htmlPath = path.join(__dirname, 'webview.html');
   let htmlContent = fs.readFileSync(htmlPath, 'utf8');
