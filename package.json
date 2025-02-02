@@ -7,7 +7,8 @@
     "vscode": "^1.50.0"
   },
   "activationEvents": [
-    "onCommand:chatbox.start"
+    "onStartupFinished",
+    "onDidChangeTextDocument"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -21,5 +22,8 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "echo 'No compilation needed for JavaScript'"
+  },
+  "dependencies": {
+    "vscode": "^1.1.37"
   }
 }
