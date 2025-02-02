@@ -94,5 +94,4 @@ StaticBeak: Chat, we are now the developers.
 DuckRateLimited: Dev's focus has hit the API rate limit.  
 GameLoopGander: Maybe they’re just waiting for a respawn timer.  
 AFKBitrate: If dev doesn’t return soon, we run an ad break.  
-DuckOS: Dev’s operating system has encountered a fatal error.  
-
+DuckOS: Dev’s operating system has encountered a fatal error.
