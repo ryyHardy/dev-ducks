@@ -36,7 +36,7 @@ function getMessages(inputData, count) {
     count: count
   };
 
-  return fetch(encodeURI(`http://127.0.0.1:8000/generate_chat/?input_data=${params.input_data}&count=${params.count}`), {
+  return fetch(encodeURI(`http://000.0.0.0:8000/generate_chat/?input_data=${params.input_data}&count=${params.count}`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
