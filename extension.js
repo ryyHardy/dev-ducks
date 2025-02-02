@@ -29,7 +29,8 @@ function activate(context) {
     currentStatement = result.statement; // Update the statement
     braceCount = result.braceCount; // Update the brace count
   });
-
+ 
+  
   context.subscriptions.push(disposable);
 
   const commandDisposable = vscode.commands.registerCommand('chatbox.start', () => {
