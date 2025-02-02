@@ -68,7 +68,6 @@
     const input = document.getElementById('input');
     const sendButton = document.getElementById('send');
 
-
     sendButton.addEventListener('click', () => {
       if (input.value.trim()) {
         // Display user's message
@@ -77,13 +76,11 @@
         chat.appendChild(userMsg);
         chat.scrollTop = chat.scrollHeight;
 
-
         // Send the message to the extension
         vscode.postMessage({ command: 'userInput', text: input.value });
         input.value = '';
       }
     });
-
 
     // Send on Enter key press
     input.addEventListener('keydown', (e) => {
@@ -93,14 +90,21 @@
       }
     });
 
-
     // Listen for AI responses from the extension
     window.addEventListener('message', event => {
       const message = event.data;
       if (message.command === 'aiResponse') {
-        const aiMsg = document.createElement('div');
-        aiMsg.textContent = "AI: " + message.text;
-        chat.appendChild(aiMsg);
+        try {
+          const aiResponse = JSON.parse(message.text); // Assuming the response is a JSON string
+          const aiMessages = aiResponse.response; // Access the 'response' array
+          aiMessages.forEach(([username, msg]) => {
+            const aiMsg = document.createElement('div');
+            aiMsg.textContent = `${username}: ${msg}`;
+            chat.appendChild(aiMsg);
+          });
+        } catch (error) {
+          console.error("Error parsing AI response:", error);
+        }
         chat.scrollTop = chat.scrollHeight;
       }
     });
