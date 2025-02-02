@@ -1,4 +1,4 @@
-function getMessages() {
+function getMessages(input_data, count) {
   const params = {
     input_data: "print('hello world!')",
     count: 5

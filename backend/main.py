@@ -6,13 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 client = TwitchGeneratorClient()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # change in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.post("/generate_chat")
 def generate_chat(input_data: str, count: int):
