@@ -68,22 +68,24 @@
     const input = document.getElementById('input');
     const sendButton = document.getElementById('send');
 
+    // Automatically scroll to the bottom when chat is updated
+    function scrollToBottom() {
+      chat.scrollTop = chat.scrollHeight;
+    }
 
     sendButton.addEventListener('click', () => {
       if (input.value.trim()) {
-        // Display user's message
+        // Display user's message immediately
         const userMsg = document.createElement('div');
         userMsg.textContent = "You: " + input.value;
         chat.appendChild(userMsg);
-        chat.scrollTop = chat.scrollHeight;
-
+        scrollToBottom();
 
         // Send the message to the extension
         vscode.postMessage({ command: 'userInput', text: input.value });
         input.value = '';
       }
     });
-
 
     // Send on Enter key press
     input.addEventListener('keydown', (e) => {
@@ -93,15 +95,44 @@
       }
     });
 
-
     // Listen for AI responses from the extension
     window.addEventListener('message', event => {
       const message = event.data;
       if (message.command === 'aiResponse') {
-        const aiMsg = document.createElement('div');
-        aiMsg.textContent = "AI: " + message.text;
-        chat.appendChild(aiMsg);
-        chat.scrollTop = chat.scrollHeight;
+        const lines = message.text.split('\n'); // Split the text into lines
+        let delay = 0; // Initialize delay
+
+        lines.forEach((line, index) => {
+          const [username, comment] = line.split(': ');
+          if (username && comment) {
+            setTimeout(() => {
+              const aiMsg = document.createElement('div');
+              aiMsg.classList.add('chat-message'); // Add a class for styling if needed
+
+              // Create username element
+              const usernameSpan = document.createElement('span');
+              usernameSpan.classList.add('username');
+              usernameSpan.textContent = username;
+
+              // Create comment element
+              const commentSpan = document.createElement('span');
+              commentSpan.classList.add('comment');
+              commentSpan.textContent = ` ${comment}`; // Space before the comment for better formatting
+
+              // Append username and comment to the message div
+              aiMsg.appendChild(usernameSpan);
+              aiMsg.appendChild(commentSpan);
+
+              // Append the message to the chatbox
+              chat.appendChild(aiMsg);
+
+              // Scroll to the bottom of the chatbox
+              scrollToBottom();
+            }, delay);
+
+            delay += 1000; // Increase delay by 1000ms (1 second) for each message
+          }
+        });
       }
     });
   </script>
