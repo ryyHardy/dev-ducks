@@ -6,6 +6,9 @@ import os
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI-API-KEY")
 
+with open("data/inactive_messages.txt") as f:
+    premade_inactive_messages = [line.split(":", 1) for line in f.readlines()]
+
 # Define prompt template
 PROMPT_TEMPLATE = PromptTemplate.from_template(
     "Create a list of {count} imaginary Twitch chat messages with imaginary Twitch usernames reacting to aspects of the following code. Make the messages relevant to the code. "
