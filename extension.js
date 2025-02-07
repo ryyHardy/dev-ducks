@@ -1,205 +1,173 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 let panel;
+let previousLine = -1; // To track the previous line
+let messageQueue = [];
+
+// A list of introductory messages to display when the user first starts
+const introMessages = [
+  "Welcome to Dev Ducks! Enjoy the increase in productivity.",
+  "Our ducks are always ready to quack up some code with you!",
+  "Dev Ducks: Bringing productivity and fun to your dev life!"
+];
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
   console.log('Typing Logger extension is now active!');
-  
-  let currentStatement = ''; // Buffer to store the current statement
-  let braceCount = 0; // To track the nested braces
-
-  // Monitor text document changes
-  const disposable = vscode.workspace.onDidChangeTextDocument(event => {
-    const changes = event.contentChanges;
-    const editor = vscode.window.activeTextEditor;
-    const cursorPosition = editor ? editor.selection.active : new vscode.Position(0, 0);
-
-    // Monitor any open file regardless of file type
-    const result = readChanges(changes, currentStatement, braceCount, cursorPosition);
-    currentStatement = result.statement; // Update the statement
-    braceCount = result.braceCount; // Update the brace count
-  });
-
-  context.subscriptions.push(disposable);
 
   // Register the command for the chatbox UI
   const commandDisposable = vscode.commands.registerCommand('chatbox.start', () => {
     panel = vscode.window.createWebviewPanel(
       'chatbox',
       'Chat Box',
-      vscode.ViewColumn.Beside,  // You can change this to a different column if needed
+      vscode.ViewColumn.Beside, // Open the chatbox beside the editor
       { enableScripts: true }
     );
-  
-    // Load the HTML content into the webview
-    panel.webview.html = getWebviewContent();
-  
-    // Send a test message to the chat box
-    panel.webview.postMessage({ command: 'aiResponse', text: "Welcome to the Dev Ducks Chatbox! Let's start chatting!" });
 
-    // Listen for messages from the webview (user input)
+    panel.webview.html = getWebviewContent();
+
+    // Welcome message
+    panel.webview.postMessage({
+      command: 'aiResponse',
+      text: "Welcome to the Dev Ducks Chatbox! Let's start chatting!",
+    });
+
+    // Listen for messages from the webview (chat)
     panel.webview.onDidReceiveMessage((message) => {
       if (message.command === 'userInput') {
         const userCode = message.text;
-        console.log(`User: ${userCode}`); // Log user input to the console
-
-        const count = 1; // Adjust as needed
-        getMessages(userCode, count)
-          .then(aiOutput => {
-            // Send AI response back to the webview
-            panel.webview.postMessage({ command: 'aiResponse', text: aiOutput });
-
-            // Also log the AI output to the console
-            //console.log(`AI: ${aiOutput}`);
+        console.log(`User typed: ${userCode}`);
+    
+        // Process the user's input as if it were code in the editor
+        getMessages(userCode, 1)
+          .then((response) => {
+            console.log(response); // Log the AI response
+            if (panel && panel.webview) {
+              panel.webview.postMessage({
+                command: 'aiResponse',
+                text: response,
+              });
+            }
           })
-          .catch(err => {
-            vscode.window.showErrorMessage("AI error: " + err);
+          .catch((err) => {
+            console.error('Error in getMessages:', err);
+            if (panel && panel.webview) {
+              panel.webview.postMessage({
+                command: 'aiResponse',
+                text: 'Error processing your input. Please try again.',
+              });
+            }
           });
       }
-    });
+    });    
   });
 
   context.subscriptions.push(commandDisposable);
 
-  // Automatically trigger the 'chatbox.start' command when the extension is activated
+  // Automatically start the chatbox on activation
   vscode.commands.executeCommand('chatbox.start');
-}
 
-// Handle changes in the text document
-function readChanges(changes, currentStatement, braceCount, cursorPosition) {
-  changes.forEach(change => {
-    // Handle opening brace
-    if (change.text === '{') {
-      braceCount++; // Increment brace count for nested blocks
-    } 
-    // Handle closing brace
-    else if (change.text === '}') {
-      braceCount--; // Decrement brace count when closing brace is encountered
+  // Monitor cursor movement in the editor
+  const selectionDisposable = vscode.window.onDidChangeTextEditorSelection((event) => {
+    const editor = vscode.window.activeTextEditor;
 
-      // Log the statement only if cursor is outside the closing brace (after auto-completion)
-      if (braceCount === 0 && cursorPosition.character === change.range.end.character) {
-        console.log('Statement inside braces:');
-        nestedStatement(currentStatement); // Log the current statement
-        panel.webview.postMessage({ command: 'aiResponse', text: nestedStatement(currentStatement)});
+    if (editor) {
+      const currentLine = editor.selection.active.line;
 
-        currentStatement = ''; // Clear the buffer after logging
+      // Check if the cursor moved to a new line
+      if (currentLine !== previousLine && previousLine >= 1) {
+        const document = editor.document;
+        const previousLineText = document.lineAt(previousLine).text.trim();
+
+        if (previousLineText) {
+          console.log(`Processing line: ${previousLineText}`);
+
+          getMessages(previousLineText, 1)
+            .then((response) => {
+              console.log(response); // Log the AI response
+              if (panel && panel.webview) {
+                panel.webview.postMessage({
+                  command: 'aiResponse',
+                  text: response,
+                });
+              }
+            })
+            .catch((err) => {
+              console.error('Error in getMessages:', err);
+              if (panel && panel.webview) {
+                panel.webview.postMessage({
+                  command: 'aiResponse',
+                  text: 'Error processing your input. Please try again.',
+                });
+              }
+            });
+        }
       }
-    } 
-    // Handle Enter key (new line)
-    else if (change.text === '\n') {
-      if (braceCount === 0) {
-        console.log('Statement outside braces:');
-        const statement = nestedStatement(currentStatement);
-        
-        // Call getMessages and resolve the promise
-        getMessages(statement, 1).then(response => {
-          console.log(response); // Log the AI response to the console
-          
-          // Send the AI response to the chatbox
-          panel.webview.postMessage({ command: 'aiResponse', text: response });
-        }).catch(err => {
-          console.error('Error in getMessages:', err);
-          
-          // Send an error message to the chatbox if the API call fails
-          panel.webview.postMessage({ command: 'aiResponse', text: 'Error processing your input. Please try again.' });
-        });
 
-        currentStatement = ''; // Clear the buffer after logging
-      }
-    }
-
-    // Handle backspace (remove characters)
-    else if (change.text === '') {
-      currentStatement = currentStatement.slice(0, currentStatement.length - change.rangeLength);
-    } 
-    // Append the typed text
-    else {
-      currentStatement += change.text;
+      // Update the previous line
+      previousLine = currentLine;
     }
   });
 
-  return { statement: currentStatement, braceCount, cursorPosition }; // Return updated values
+  context.subscriptions.push(selectionDisposable);
 }
 
-// Format nested statement
-function nestedStatement(statement) {
-  const formattedStatement = statement.trim();
-  return formattedStatement; // Output the formatted statement
-}
 
-// Get AI response from an external API or script
-function getAiResponse(code, count, callback) {
-  // Adjust the path to your Python script accordingly.
-  const safeCode = code.replace(/"/g, '\\"');
-  const cmd = `python path/to/your_script.py "${safeCode}" ${count}`;
-
-  exec(cmd, (error, stdout, stderr) => {
-    if (error) {
-      callback(stderr || error.toString());
-    } else {
-      callback(null, stdout.trim());
-    }
-  });
-}
-
-// Get content for the webview UI
-function getWebviewContent() {
-  const htmlPath = path.join(__dirname, 'webview.html');
-  let htmlContent = fs.readFileSync(htmlPath, 'utf8');
-  
-  // Placeholder for dynamic content
-  const dynamicContent = '<div id="dynamic-content"></div>';
-  
-  // Insert dynamic content into the HTML
-  htmlContent = htmlContent.replace('</body>', `${dynamicContent}</body>`);
-  
-  return htmlContent;
-}
 
 function getMessages(input_data, count) {
   return fetch(encodeURI(`http://0.0.0.0:8000/generate_chat/?input_data=${input_data}&count=${count}`), {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json"
-    }
+      'Content-Type': 'application/json',
+    },
   })
-    .then(response => response.json())
-    .then(data => {
+    .then((response) => response.json())
+    .then((data) => {
       if (Array.isArray(data)) {
-        // Collect messages as a single string for the chatbox
-        const messages = data
-          .map(item => {
-            if (Array.isArray(item) && item.length === 2) {
-              const username = item[0];
-              const message = item[1];
-              return `${username}: "${message}"`;
-            }
-            return null; // Ignore invalid entries
-          })
-          .filter(Boolean) // Remove null values
-          .join('\n'); // Join messages with line breaks
+        // Add new messages to the queue
+        data.forEach(([username, message]) => {
+          messageQueue.push(`${username}: "${message}"`);
+        });
 
-        console.log(messages); // Log the combined messages
-        return messages; // Return combined messages for the chatbox
+        // After adding messages, manage the queue size
+        manageMessageQueue();
+
+        // Return the updated queue as a string
+        return messageQueue.join('\n');
       } else {
-        console.error("Unexpected response format:", data);
-        return "Error: Unexpected response format.";
+        console.error('Unexpected response format:', data);
+        return 'Error: Unexpected response format.'; // Return premade message in case of error
       }
     })
-    .catch(error => {
-      console.error("Error in getMessages:", error);
-      return "Error: Failed to fetch messages.";
+    .catch((error) => {
+      console.error('Error in getMessages:', error);
+      return 'Error: Failed to fetch messages.';
     });
 }
 
-function deactivate() {}
+// Get content for the chatbox UI
+function getWebviewContent() {
+  const htmlPath = path.join(__dirname, 'webview.html');
+  let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  return htmlContent;
+}
+
+// This function handles adding messages to the queue, and clearing the queue if necessary
+function manageMessageQueue() {
+  // If the queue exceeds 15 messages, clear it
+  if (messageQueue.length > 15) {
+    messageQueue = [];
+  }
+}
+
+
+function deactivate() {
+  console.log('Thanks for using Dev Ducks!');
+}
 
 module.exports = { activate, deactivate };
