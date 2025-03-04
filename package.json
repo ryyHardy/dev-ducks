@@ -1,6 +1,6 @@
 {
   "name": "dev-ducks",
-  "displayName": "Dev Ducks",
+  "displayName": "DevDucks",
   "description": "A Twitch chat-like window populated with Ducks that help you code!",
   "version": "0.0.1",
   "engines": {
