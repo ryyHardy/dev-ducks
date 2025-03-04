@@ -1,29 +1,39 @@
-from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
+from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
-OPENAI_KEY = os.getenv("OPENAI-API-KEY")
+OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
+
+PROMPT_TEMPLATE = """
+Create a list of {0} imaginary Twitch chat messages with imaginary Twitch usernames reacting to aspects of the following code constructively as if all the viewers are developers. Make the messages relevant to the code.
+The response should be in the format 'username:message' (with one per line and nothing else). If the code cuts off, assume that it isn't an error. \n\nCode:\n{1}
+"""
 
 # Define prompt template
-PROMPT_TEMPLATE = PromptTemplate.from_template(
-    "Create a list of {count} imaginary Twitch chat messages with imaginary Twitch usernames reacting to aspects of the following code constructively as if all the viewers are developers. Make the messages relevant to the code."
-    "The response should be in the format 'username:message' (with one per line). If the code cuts off, assume that it isn't an error. \n\nCode:\n{code}"
-)
+# PROMPT_TEMPLATE = PromptTemplate.from_template(
+#     "Create a list of {count} imaginary Twitch chat messages with imaginary Twitch usernames reacting to aspects of the following code constructively as if all the viewers are developers. Make the messages relevant to the code."
+#     "The response should be in the format 'username:message' (with one per line and nothing else). If the code cuts off, assume that it isn't an error. \n\nCode:\n{code}"
+# )
 
 class TwitchGeneratorClient:
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o",
-            temperature=0.7,
-            max_tokens=1000,
-            timeout=30,
-        )
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=OPENROUTER_KEY
+        ) 
 
     def generate_chat(self, code: str, count: int):
-        prompt = PROMPT_TEMPLATE.format(code=code, count=count)
-        response = self.llm.invoke(prompt).content.strip()
+        prompt = PROMPT_TEMPLATE.format(str(count), code)
+        response = self.client.chat.completions.create(
+            model="deepseek/deepseek-r1-distill-llama-70b:free", # FREE?!
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        ).choices[0].message.content
         chat_messages = []
         for line in response.split("\n"):
             if ":" in line:
