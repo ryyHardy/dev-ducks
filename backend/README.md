@@ -30,7 +30,7 @@ NOTE: If the URL hasn't been visited in a while, it shuts itself down until it g
 
 The backend server is deployed, so you can always access that to run the extension locally. That being said, if you still want to run the backend server locally for development purposes such as testing changes to the LLM code, do the following:
 
-1. Substitute an **OpenRouter** key after the equals sign in ``.env.sample`` and rename that file to ``.env``. You can either ask me to provide mine to you or go on [OpenRouter](https://openrouter.ai/) yourself and generate one. It's free (at least for the model we're currently using).
+1. Substitute an **OpenRouter** key after the equals sign in ``.env.sample`` and rename that file to ``.env``. Go on [OpenRouter](https://openrouter.ai/) and generate one for yourself. It's free (at least for the model we're currently using).
 2. **cd** into the backend and create a Python virtual environment. Then, activate it.
 3. Run ``pip install -r requirements.txt`` to install dependencies.
 4. Use ``fastapi run main.py`` to run the server and the URL for it will be shown. Use that URL to make requests to the API. I recommend using a tool like Postman for this.
