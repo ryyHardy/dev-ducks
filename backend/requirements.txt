@@ -1,4 +1,5 @@
 fastapi
+fastapi-cors
 uvicorn
 openai
 python-dotenv
