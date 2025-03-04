@@ -23,9 +23,9 @@ def generate_chat(input_data: str, count: int):
     messages = client.generate_chat(input_data, count)
     return messages
 
-@app.post("/donation_message")
-def donation_message():
-    pass
+# @app.post("/donation_message")
+# def donation_message(input_dat: str):
+#     pass
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=PORT)

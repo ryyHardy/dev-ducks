@@ -120,7 +120,7 @@ function activate(context) {
 
 
 function getMessages(input_data, count) {
-  return fetch(encodeURI(`http://0.0.0.0:8000/generate_chat/?input_data=${input_data}&count=${count}`), {
+  return fetch(encodeURI(`https://dev-ducks.onrender.com/generate_chat/?input_data=${input_data}&count=${count}`), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
