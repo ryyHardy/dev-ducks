@@ -1,3 +1,5 @@
+import os
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from llm import TwitchGeneratorClient
@@ -11,6 +13,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+PORT = int(os.getenv("PORT", 8000)) # Default to 8000 if not set
+
 client = TwitchGeneratorClient()
 
 
@@ -22,3 +26,6 @@ def generate_chat(input_data: str, count: int):
 @app.post("/donation_message")
 def donation_message():
     pass
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
