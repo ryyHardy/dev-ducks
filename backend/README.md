@@ -1,4 +1,4 @@
-# DedDucks Backend
+# DevDucks Backend
 
 This is the AI backend for DevDucks written with FastAPI.
 It is currently deployed on [render.com](https://render.com/), and you access it as shown in ``extension.js`` without needing to touch any Python on your end.
