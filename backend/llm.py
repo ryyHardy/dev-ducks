@@ -19,7 +19,6 @@ class TwitchGeneratorClient:
             temperature=0.7,
             max_tokens=1000,
             timeout=30,
-            
         )
 
     def generate_chat(self, code: str, count: int):
