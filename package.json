@@ -8,7 +8,7 @@
   },
   "activationEvents": [
     "onStartupFinished",
-    "onDidChangeTextDocument"
+    "onLanguage:*"
   ],
   "main": "./extension.js",
   "contributes": {
