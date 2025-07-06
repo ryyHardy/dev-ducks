@@ -19,8 +19,8 @@ client = TwitchGeneratorClient()
 
 
 @app.post("/generate_chat")
-def generate_chat(input_data: str, count: int):
-    messages = client.generate_chat(input_data, count)
+def generate_chat(code: str, count: int):
+    messages = client.generate_chat(code, count)
     return messages
 
 # @app.post("/donation_message")
