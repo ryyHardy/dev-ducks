@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
+import { showPanel } from "./chat";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("DevDucks is now active!");
 
   const disposable = vscode.commands.registerCommand("dev-ducks.chat", () => {
-    vscode.window.showInformationMessage("DevDucks chat!");
+    showPanel();
   });
 
   context.subscriptions.push(disposable);
