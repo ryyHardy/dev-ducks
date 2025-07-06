@@ -2,10 +2,7 @@ import { CodeContext, ChatMessage } from "./types";
 
 const BASE_URL = "https://dev-ducks.onrender.com/generate_chat";
 
-export async function generateReactionChats(
-  context: CodeContext,
-  count: number
-) {
+export async function generateReactionChats(code: CodeContext, count: number) {
   // const params = new URLSearchParams({
   //   context: JSON.stringify(context),
   //   count: count.toString(),
@@ -19,7 +16,7 @@ export async function generateReactionChats(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      code: context,
+      code: code,
       count: count,
     }),
   });
