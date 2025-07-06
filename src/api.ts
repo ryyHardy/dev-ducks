@@ -19,7 +19,7 @@ export async function generateReactionChats(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      context: context,
+      code: context,
       count: count,
     }),
   });
