@@ -5,6 +5,10 @@ import path from "path";
 // single webview panel
 let chatPanel: vscode.WebviewPanel | undefined;
 
+export function sendToWebview(message: any) {
+  chatPanel?.webview.postMessage(message);
+}
+
 export function showPanel() {
   if (!chatPanel) {
     chatPanel = vscode.window.createWebviewPanel(
