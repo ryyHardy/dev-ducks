@@ -1,6 +1,9 @@
 /// Maximum length of the chat possible
 const MaxLength = 15;
 
+/// Number of messages to generate per context change
+const MessagesPerContextChange = 10;
+
 /// Reference to chat section
 const chat = document.querySelector(".chat");
 
@@ -41,12 +44,10 @@ function addMessage(username, message) {
 window.addEventListener("message", event => {
   const data = event.data;
   switch (data.name) {
-    case "add-message":
-      // Add a new message
-      const username = data.content.username;
-      const message = data.content.message;
-
-      addMessage(username, message);
+    case "add-messages":
+      for (let { username, message } of data.content) {
+        addMessage(username, message);
+      }
 
     case "clear":
       trimChat(0);

@@ -15,7 +15,7 @@
     "commands": [
       {
         "command": "dev-ducks.chat",
-        "title": "Hello World"
+        "title": "DevDucks Chat"
       }
     ]
   },

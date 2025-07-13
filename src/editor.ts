@@ -1,13 +1,17 @@
 import * as vscode from "vscode";
 import { CodeContext } from "./types";
 
-export function getCodeContext(): CodeContext | undefined {
-  const editor = vscode.window.activeTextEditor;
+export function firstAndLastVisibleLines(editor: vscode.TextEditor): {
+  first: number;
+  last: number;
+} {
+  return {
+    first: editor.visibleRanges[0].start.line,
+    last: editor.visibleRanges[0].end.line,
+  };
+}
 
-  if (!editor) {
-    return;
-  }
-
+export function getCodeContext(editor: vscode.TextEditor): CodeContext {
   // Currently, we only use the code actually visible in the editor as context
   const document = editor.document;
   const visibleRange = editor.visibleRanges[0];
