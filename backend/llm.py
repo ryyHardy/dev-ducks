@@ -7,7 +7,7 @@ load_dotenv()
 
 OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
 
-CLIENT_URL = "https://openrouter.api/v1/chat/completions"
+CLIENT_URL = "https://openrouter.ai/v1/chat/completions"
 
 CLIENT_HEADERS = {
     "Authorization": f"Bearer {OPENROUTER_KEY}",
