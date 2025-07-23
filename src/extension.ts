@@ -7,7 +7,7 @@ export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.commands.registerCommand(
     "dev-ducks.chat",
     async () => {
-      showPanel();
+      showPanel(context);
     }
   );
 

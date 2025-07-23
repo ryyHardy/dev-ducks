@@ -16,7 +16,7 @@ export async function generateReactionChats(code: CodeContext, count: number) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      code: code,
+      code: JSON.stringify(code),
       count: count,
     }),
   });

@@ -14,13 +14,13 @@ let chatPanel: vscode.WebviewPanel | undefined;
 let updateTimeout: NodeJS.Timeout | undefined;
 
 /// Minimum time between sending context updates
-const DEBOUNCE_TIME = 300;
+const DEBOUNCE_TIME = 3000;
 
 export function sendToWebview(message: any) {
   chatPanel?.webview.postMessage(message);
 }
 
-export function showPanel() {
+export function showPanel(context: vscode.ExtensionContext) {
   if (!chatPanel) {
     chatPanel = vscode.window.createWebviewPanel(
       "devducks-chat",
@@ -29,7 +29,7 @@ export function showPanel() {
       { enableScripts: true }
     );
 
-    chatPanel.webview.html = getWebviewContent();
+    chatPanel.webview.html = getWebviewContent(context);
   }
 
   chatPanel.reveal();
@@ -60,6 +60,12 @@ export function showPanel() {
     updateContext(editor);
   });
 
+  // Update context for AI when the visible range of editor content changes
+  vscode.window.onDidChangeTextEditorVisibleRanges(event => {
+    const editor = event.textEditor;
+    updateContext(editor);
+  });
+
   // Update context for AI when changes in the documment happen
   vscode.workspace.onDidChangeTextDocument(event => {
     const editor = vscode.window.activeTextEditor;
@@ -69,7 +75,22 @@ export function showPanel() {
   });
 }
 
-function getWebviewContent() {
-  const webviewPath = path.join(__dirname, "views/chat/webview.html");
-  return fs.readFileSync(webviewPath, "utf8");
+function getWebviewContent(context: vscode.ExtensionContext) {
+  const webviewPath = context.asAbsolutePath(
+    path.join("src", "views", "chat", "webview.html")
+  );
+  let html = fs.readFileSync(webviewPath, "utf8");
+
+  const styleUri = vscode.Uri.file(
+    context.asAbsolutePath(path.join("src", "views", "chat", "style.css"))
+  ).with({ scheme: "vscode-resource" });
+
+  const scriptUri = vscode.Uri.file(
+    context.asAbsolutePath(path.join("src", "views", "chat", "script.js"))
+  ).with({ scheme: "vscode-resource" });
+
+  html = html.replace('href="style.css"', `href="${styleUri}"`);
+  html = html.replace('src="script.js"', `src="${scriptUri}"`);
+
+  return html;
 }

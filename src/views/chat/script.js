@@ -37,7 +37,7 @@ function addMessage(username, message) {
 
   chat.appendChild(msgDiv);
 
-  trimMessages(MaxLength);
+  trimChat(MaxLength);
 }
 
 // Handle messages from the vscode extension
@@ -48,8 +48,9 @@ window.addEventListener("message", event => {
       for (let { username, message } of data.content) {
         addMessage(username, message);
       }
-
+      break;
     case "clear":
       trimChat(0);
+      break;
   }
 });

@@ -26,7 +26,7 @@ class TwitchGeneratorClient:
     def generate_chat(self, code: str, count: int):
         prompt = PROMPT_TEMPLATE.format(str(count), code)
         response = self.client.chat.completions.create(
-            model="deepseek/deepseek-chat-v3-0324:free", # FREE?!
+            model="deepseek/deepseek-r1-distill-llama-70b:free", # FREE?!
             messages=[
                 {
                     "role": "user",
