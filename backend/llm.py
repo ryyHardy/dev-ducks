@@ -33,10 +33,16 @@ def generate_messages(code: str, count: str):
 
     payload = {"model": CLIENT_MODEL, "messages": [{"role": "user", "content": prompt}]}
 
-    response = requests.post(CLIENT_URL, headers=CLIENT_HEADERS, json=payload).text
+    response = requests.post(CLIENT_URL, headers=CLIENT_HEADERS, json=payload)
+    if not response.ok:
+        raise Exception(f"API request failed with status code {response.status_code}: {response.text}")
+    
+    response_data = response.json()
+    # Extract object containing the generated messages
+    response_content = response_data["choices"][0]["message"]["content"]
 
     chat_messages = []
-    for line in response.split("\n"):
+    for line in response_content.split("\n"):
         if ":" in line:
             username, message = line.split(":", 1)
             chat_messages.append(
