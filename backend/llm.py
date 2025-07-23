@@ -1,25 +1,29 @@
+import json
 import os
+import re
 
-import requests
 from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
-OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
+HUGGINGFACE_KEY = os.getenv("HUGGINGFACE_KEY")
 
-CLIENT_URL = "https://openrouter.ai/api/v1/chat/completions"
+SYSTEM_PROMPT = """
+You are a helpful assistant that generates imaginary, and sometiems funny, Twitch chat messages with imaginary Twitch usernames reacting to the code. The messages should be relevant to the code and constructive, as if all the viewers are developers.
+Please output the messages in JSON format.
 
-CLIENT_HEADERS = {
-    "Authorization": f"Bearer {OPENROUTER_KEY}",
-    "Content-Type": "application/json",
-}
+The JSON format is as follows:
+[
+    {"username": "username1", "message": "message1"},
+    {"username": "username2", "message": "message2"},
+    ...
+]
 
-CLIENT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
-
-PROMPT_TEMPLATE = """
-Create {0} lines of imaginary, and sometimes funny, Twitch chat messages with imaginary Twitch usernames reacting to aspects of the following code constructively as if all the viewers are developers. Make the messages relevant to the code.
-The response should be exactly in the format 'username:message' with one of those per line and nothing else. If the code cuts off, assume that it isn't an error. \n\nCode:\n{1}
+If the code cuts off, assume that it isn't an error. The code may be provided directly or wrapped in JSON with extra context.
 """
+
+client = OpenAI(base_url="https://router.huggingface.co/v1", api_key=HUGGINGFACE_KEY)
 
 # Define prompt template
 # PROMPT_TEMPLATE = PromptTemplate.from_template(
@@ -28,48 +32,30 @@ The response should be exactly in the format 'username:message' with one of thos
 # )
 
 
-def generate_messages(code: str, count: str):
-    prompt = PROMPT_TEMPLATE.format(str(count), code)
+def generate_messages(code: str, count: int):
+    user_prompt = f"Generate {count} Twitch chat messages reacting to the following code:\n\n{code}"
 
-    payload = {"model": CLIENT_MODEL, "messages": [{"role": "user", "content": prompt}]}
+    completion = client.chat.completions.create(
+        model="deepseek-ai/DeepSeek-R1:novita",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        response_format={"type": "json_object"},
+    )
 
-    response = requests.post(CLIENT_URL, headers=CLIENT_HEADERS, json=payload)
-    if not response.ok:
-        raise Exception(f"API request failed with status code {response.status_code}: {response.text}")
-    
-    response_data = response.json()
-    # Extract object containing the generated messages
-    response_content = response_data["choices"][0]["message"]["content"]
+    # Extract the JSON portion using a regular expression
+    # (particularly, removing the DeepSeek <think> tags)
+    match = re.search(
+        r"\[\s*{.*}\s*\]", completion.choices[0].message.content, re.DOTALL
+    )
+    if not match:
+        raise ValueError("The LLM response does not contain valid JSON.")
 
-    chat_messages = []
-    for line in response_content.split("\n"):
-        if ":" in line:
-            username, message = line.split(":", 1)
-            chat_messages.append(
-                {"username": username.strip(), "message": message.strip()}
-            )
-    return chat_messages
+    json_content = match.group(0)  # Extract the matched JSON string
 
-
-class TwitchGeneratorClient:
-    def __init__(self):
-        pass
-
-    def generate_chat(self, code: str, count: int):
-        prompt = PROMPT_TEMPLATE.format(str(count), code)
-        response = (
-            self.client.chat.completions.create(
-                model="deepseek/deepseek-r1-distill-llama-70b:free",  # FREE?!
-                messages=[{"role": "user", "content": prompt}],
-            )
-            .choices[0]
-            .message.content
-        )
-        chat_messages = []
-        for line in response.split("\n"):
-            if ":" in line:
-                username, message = line.split(":", 1)
-                chat_messages.append(
-                    {"username": username.strip(), "message": message.strip()}
-                )
-        return chat_messages
+    try:
+        return json.loads(json_content)
+    except json.JSONDecodeError as e:
+        print("Error decoding JSON:", e)
+        raise ValueError("Failed to parse JSON from the LLM response.")
