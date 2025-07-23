@@ -36,7 +36,7 @@ def generate_messages(code: str, count: int):
     user_prompt = f"Generate {count} Twitch chat messages reacting to the following code:\n\n{code}"
 
     completion = client.chat.completions.create(
-        model="deepseek-ai/DeepSeek-R1:novita",
+        model="deepseek-ai/DeepSeek-R1-Distill-Llama-70B:novita",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
