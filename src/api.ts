@@ -10,6 +10,8 @@ export async function generateReactionChats(code: CodeContext, count: number) {
 
   // const url = BASE_URL + `?${params.toString()}`;
 
+  console.log("Requesting messages...");
+
   const response = await fetch(BASE_URL, {
     method: "POST",
     headers: {
@@ -23,6 +25,10 @@ export async function generateReactionChats(code: CodeContext, count: number) {
   if (!response.ok) {
     throw new Error(`HTTP ERROR! status: ${response.status}`);
   }
+
   const messages: ChatMessage[] = await response.json();
+
+  console.log("Generated messages:", messages);
+
   return messages;
 }

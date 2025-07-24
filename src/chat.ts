@@ -17,7 +17,11 @@ let updateTimeout: NodeJS.Timeout | undefined;
 const DEBOUNCE_TIME = 3000;
 
 export function sendToWebview(message: any) {
-  chatPanel?.webview.postMessage(message);
+  if (!chatPanel) {
+    return;
+  }
+  console.log("Sending message to webview:", message);
+  chatPanel.webview.postMessage(message);
 }
 
 export function showPanel(context: vscode.ExtensionContext) {
@@ -57,18 +61,24 @@ export function showPanel(context: vscode.ExtensionContext) {
 
   // Update context for AI when the user changes between editors
   vscode.window.onDidChangeActiveTextEditor(editor => {
+    console.log("Active editor changed to:", editor?.document.fileName);
     updateContext(editor);
   });
 
   // Update context for AI when the visible range of editor content changes
   vscode.window.onDidChangeTextEditorVisibleRanges(event => {
     const editor = event.textEditor;
+    console.log(
+      "Visible ranges changed in: ",
+      event.textEditor.document.fileName
+    );
     updateContext(editor);
   });
 
   // Update context for AI when changes in the documment happen
   vscode.workspace.onDidChangeTextDocument(event => {
     const editor = vscode.window.activeTextEditor;
+    console.log("Changes in current document:", event.document.fileName);
     if (editor && editor.document === event.document) {
       updateContext(editor);
     }
@@ -81,16 +91,21 @@ function getWebviewContent(context: vscode.ExtensionContext) {
   );
   let html = fs.readFileSync(webviewPath, "utf8");
 
-  const styleUri = vscode.Uri.file(
-    context.asAbsolutePath(path.join("src", "views", "chat", "style.css"))
-  ).with({ scheme: "vscode-resource" });
+  const scriptUri = chatPanel!.webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      context.extensionUri,
+      "src",
+      "views",
+      "chat",
+      "script.js"
+    )
+  );
 
-  const scriptUri = vscode.Uri.file(
-    context.asAbsolutePath(path.join("src", "views", "chat", "script.js"))
-  ).with({ scheme: "vscode-resource" });
-
-  html = html.replace('href="style.css"', `href="${styleUri}"`);
-  html = html.replace('src="script.js"', `src="${scriptUri}"`);
+  // Replace the link and script tag with the correct URI
+  html = html.replace(
+    '<script src="script.js"></script>',
+    `<script src="${scriptUri}"></script>`
+  );
 
   return html;
 }

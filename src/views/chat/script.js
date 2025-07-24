@@ -1,8 +1,7 @@
+console.log("Chat webview script running!");
+
 /// Maximum length of the chat possible
 const MaxLength = 15;
-
-/// Number of messages to generate per context change
-const MessagesPerContextChange = 10;
 
 /// Reference to chat section
 const chat = document.querySelector(".chat");
@@ -33,24 +32,44 @@ function addMessage(username, message) {
   usernameSpan.textContent = username;
 
   msgDiv.appendChild(usernameSpan);
-  msgDiv.innerHTML += ` ${message}`;
+  msgDiv.innerHTML += `: ${message}`;
 
   chat.appendChild(msgDiv);
 
   trimChat(MaxLength);
 }
 
+// Queue for incoming messages
+const messageQueue = [];
+
+// Function to process the queue
+function processQueue() {
+  if (messageQueue.length === 0) {
+    return;
+  }
+
+  const { username, message } = messageQueue.shift();
+  addMessage(username, message);
+
+  // Process the next message after a random delay
+  const delay = Math.floor(Math.random() * (2000 - 500)) + 500; // 500ms to 2000ms
+  setTimeout(processQueue, delay);
+}
+
 // Handle messages from the vscode extension
 window.addEventListener("message", event => {
   const data = event.data;
+  console.log("Message received:", data);
   switch (data.name) {
     case "add-messages":
       for (let { username, message } of data.content) {
-        addMessage(username, message);
+        messageQueue.push({ username, message });
       }
+      processQueue(); // Start processing the queue if not already running
       break;
     case "clear":
       trimChat(0);
+      messageQueue.length = 0; // Clear the queue
       break;
   }
 });

@@ -7,10 +7,55 @@
       content="width=device-width, initial-scale=1.0"
     />
     <title>DevDucks Chat</title>
-    <link
-      rel="stylesheet"
-      href="style.css"
-    />
+    <style>
+      :root {
+        --text-primary: #e6e6e6;
+
+        --bg-light: #36393f;
+        --bg-mid: #2c2f33;
+        --bg-dark: #1e1e1e;
+
+        --bg-accent: #9146ff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+      }
+
+      .chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+
+        background-color: var(--bg-mid);
+        border: 1px solid #333;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .chat-message {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid #444;
+      }
+
+      .username {
+        font-weight: bold;
+        color: var(--bg-accent);
+      }
+    </style>
   </head>
   <body>
     <section class="chat"></section>
